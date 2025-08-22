@@ -1,20 +1,26 @@
-import {init, verifySignature, webexGet, webexPost, getBotId} from './webex.js'
-import {parseCommand} from './vm-commands.js'
-import {listVms, claimVm, releaseVm} from './firestore.js'
-import {rosterCard} from './cards.js'
+import {
+  init,
+  verifySignature,
+  webexGet,
+  webexPost,
+  getBotId,
+} from "./webex.js"
+import { parseCommand } from "./vm-commands.js"
+import { listVms, claimVm, releaseVm, vms } from "./firestore.js"
+import { rosterCard } from "./cards.js"
 
-const postRoster = async roomId => {
+const postRoster = async (roomId) => {
   const vms = await listVms()
   const card = rosterCard(vms)
-  await webexPost('/messages', {
+  await webexPost("/messages", {
     roomId,
-    markdown: 'VM roster',
+    markdown: "VM roster",
     attachments: [
       {
-        contentType: 'application/vnd.microsoft.card.adaptive',
-        content: card
-      }
-    ]
+        contentType: "application/vnd.microsoft.card.adaptive",
+        content: card,
+      },
+    ],
   })
 }
 
@@ -22,19 +28,19 @@ const handleCommand = async (roomId, text, personId) => {
   const cmd = parseCommand(text)
   if (!cmd) return
 
-  if (cmd.action === 'list') {
+  if (cmd.action === "list") {
     await postRoster(roomId)
     return
   }
 
-  if (cmd.action === 'claim' && personId) {
+  if (cmd.action === "claim" && personId) {
     const person = await webexGet(`/people/${personId}`)
     await claimVm(cmd.name, person.displayName, cmd.minutes)
     await postRoster(roomId)
     return
   }
 
-  if (cmd.action === 'release') {
+  if (cmd.action === "release") {
     await releaseVm(cmd.name)
     await postRoster(roomId)
   }
@@ -43,43 +49,70 @@ const handleCommand = async (roomId, text, personId) => {
 export const webexHooks = async (req, res) => {
   try {
     await init()
-    const signature = req.get('x-spark-signature') || ''
+    const signature = req.get("x-spark-signature") || ""
     const raw = req.rawBody
     if (!verifySignature(raw, signature)) {
-      console.warn('invalid signature')
-      res.status(401).send('invalid signature')
+      console.warn("invalid signature")
+      res.status(401).send("invalid signature")
       return
     }
 
-    const {resource, event, data} = req.body
+    const { resource, event, data } = req.body
 
-    if (resource === 'messages' && event === 'created') {
+    if (resource === "messages" && event === "created") {
       try {
         const msg = await webexGet(`/messages/${data.id}`)
         if (msg.personId === getBotId()) {
-          res.status(200).send('ok')
+          res.status(200).send("ok")
           return
         }
-        await handleCommand(msg.roomId, msg.text || '', msg.personId)
+        await handleCommand(msg.roomId, msg.text || "", msg.personId)
       } catch (err) {
-        console.error('message handling error', err)
+        console.error("message handling error", err)
       }
     }
 
-    if (resource === 'attachmentActions' && event === 'created') {
+    if (resource === "attachmentActions" && event === "created") {
       try {
         const action = await webexGet(`/attachment/actions/${data.id}`)
-        await handleCommand(action.roomId, action.inputs?.command || '', action.personId)
+        await handleCommand(
+          action.roomId,
+          action.inputs?.command || "",
+          action.personId,
+        )
       } catch (err) {
-        console.error('attachment action error', err)
+        console.error("attachment action error", err)
       }
     }
 
-    res.status(200).send('ok')
+    res.status(200).send("ok")
   } catch (err) {
-    console.error('webexHooks error', err)
-    res.status(500).send('error')
+    console.error("webexHooks error", err)
+    res.status(500).send("error")
   }
 }
 
-export const cleanup = async () => {}
+export const cleanup = async (req, res) => {
+  try {
+    const collection = vms()
+    const now = new Date()
+    const snapshot = await collection
+      .where("endAt", "<=", now)
+      .where("endAt", "!=", null)
+      .get()
+
+    if (!snapshot.empty) {
+      const batch = collection.firestore.batch()
+      snapshot.docs.forEach((doc) => {
+        batch.update(doc.ref, { assignedTo: null, startAt: null, endAt: null })
+      })
+      await batch.commit()
+      console.log("released", snapshot.size, "vms")
+    }
+
+    res.status(200).send("ok")
+  } catch (err) {
+    console.error("cleanup error", err)
+    res.status(500).send("error")
+  }
+}
