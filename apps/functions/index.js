@@ -1,10 +1,43 @@
-import {init, verifySignature, webexGet, getBotId} from './webex.js'
+import {init, verifySignature, webexGet, webexPost, getBotId} from './webex.js'
 import {parseCommand} from './vm-commands.js'
+import {listVms, claimVm, releaseVm} from './firestore.js'
+import {rosterCard} from './cards.js'
 
-const handleCommand = async (roomId, text) => {
+const postRoster = async roomId => {
+  const vms = await listVms()
+  const card = rosterCard(vms)
+  await webexPost('/messages', {
+    roomId,
+    markdown: 'VM roster',
+    attachments: [
+      {
+        contentType: 'application/vnd.microsoft.card.adaptive',
+        content: card
+      }
+    ]
+  })
+}
+
+const handleCommand = async (roomId, text, personId) => {
   const cmd = parseCommand(text)
   if (!cmd) return
-  console.log('command', cmd)
+
+  if (cmd.action === 'list') {
+    await postRoster(roomId)
+    return
+  }
+
+  if (cmd.action === 'claim' && personId) {
+    const person = await webexGet(`/people/${personId}`)
+    await claimVm(cmd.name, person.displayName, cmd.minutes)
+    await postRoster(roomId)
+    return
+  }
+
+  if (cmd.action === 'release') {
+    await releaseVm(cmd.name)
+    await postRoster(roomId)
+  }
 }
 
 export const webexHooks = async (req, res) => {
@@ -27,7 +60,7 @@ export const webexHooks = async (req, res) => {
           res.status(200).send('ok')
           return
         }
-        await handleCommand(msg.roomId, msg.text || '')
+        await handleCommand(msg.roomId, msg.text || '', msg.personId)
       } catch (err) {
         console.error('message handling error', err)
       }
@@ -36,7 +69,7 @@ export const webexHooks = async (req, res) => {
     if (resource === 'attachmentActions' && event === 'created') {
       try {
         const action = await webexGet(`/attachment/actions/${data.id}`)
-        await handleCommand(action.roomId, action.inputs?.command || '')
+        await handleCommand(action.roomId, action.inputs?.command || '', action.personId)
       } catch (err) {
         console.error('attachment action error', err)
       }
