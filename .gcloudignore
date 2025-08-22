@@ -1,0 +1,8 @@
+# Files excluded from upload to GCP
+node_modules
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+.gcloudignore
+.git
+.gitignore
