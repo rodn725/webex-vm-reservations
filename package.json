@@ -11,7 +11,7 @@
     "seed": "node scripts/seed.js",
     "dev": "functions-framework --target=webexHooks",
     "deploy:webex": "gcloud functions deploy webexHooks --gen2 --runtime=nodejs20 --region=us-central1 --source=apps/functions --entry-point=webexHooks --trigger-http --allow-unauthenticated",
-    "deploy:cleanup": "gcloud functions deploy cleanup --gen2 --runtime=nodejs20 --region=us-central1 --source=apps/functions --entry-point=cleanup --schedule='*/5 * * * *'"
+    "deploy:cleanup": "gcloud functions deploy cleanup --gen2 --runtime=nodejs20 --region=us-central1 --source=apps/functions --entry-point=cleanup --trigger-http --no-allow-unauthenticated"
   },
   "dependencies": {
     "@google-cloud/firestore": "^7.6.0",
