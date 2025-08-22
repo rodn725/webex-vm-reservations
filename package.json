@@ -1,0 +1,25 @@
+{
+  "name": "webex-vm-reservations",
+  "version": "0.1.0",
+  "type": "module",
+  "engines": {
+    "node": "^20.0.0"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "seed": "node scripts/seed.js",
+    "dev": "functions-framework --target=webexHooks",
+    "deploy:webex": "gcloud functions deploy webexHooks --gen2 --runtime=nodejs20 --region=us-central1 --source=apps/functions --entry-point=webexHooks --trigger-http --allow-unauthenticated",
+    "deploy:cleanup": "gcloud functions deploy cleanup --gen2 --runtime=nodejs20 --region=us-central1 --source=apps/functions --entry-point=cleanup --schedule='*/5 * * * *'"
+  },
+  "dependencies": {
+    "@google-cloud/firestore": "^7.6.0"
+  },
+  "devDependencies": {
+    "@google-cloud/functions-framework": "^4.0.0",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.2.5"
+  }
+}

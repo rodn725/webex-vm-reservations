@@ -1,0 +1,12 @@
+[
+  { "id": "vm-01", "name": "VM 01", "owner": null, "endAt": null },
+  { "id": "vm-02", "name": "VM 02", "owner": null, "endAt": null },
+  { "id": "vm-03", "name": "VM 03", "owner": null, "endAt": null },
+  { "id": "vm-04", "name": "VM 04", "owner": null, "endAt": null },
+  { "id": "vm-05", "name": "VM 05", "owner": null, "endAt": null },
+  { "id": "vm-06", "name": "VM 06", "owner": null, "endAt": null },
+  { "id": "vm-07", "name": "VM 07", "owner": null, "endAt": null },
+  { "id": "vm-08", "name": "VM 08", "owner": null, "endAt": null },
+  { "id": "vm-09", "name": "VM 09", "owner": null, "endAt": null },
+  { "id": "vm-10", "name": "VM 10", "owner": null, "endAt": null }
+]
