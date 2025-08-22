@@ -14,7 +14,8 @@
     "deploy:cleanup": "gcloud functions deploy cleanup --gen2 --runtime=nodejs20 --region=us-central1 --source=apps/functions --entry-point=cleanup --schedule='*/5 * * * *'"
   },
   "dependencies": {
-    "@google-cloud/firestore": "^7.6.0"
+    "@google-cloud/firestore": "^7.6.0",
+    "@google-cloud/secret-manager": "^5.0.0"
   },
   "devDependencies": {
     "@google-cloud/functions-framework": "^4.0.0",
