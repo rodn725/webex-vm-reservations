@@ -51,6 +51,7 @@ export const webexHooks = async (req, res) => {
     await init()
     const signature = req.get("x-spark-signature") || ""
     const raw = req.rawBody
+
     if (!verifySignature(raw, signature)) {
       console.warn("invalid signature")
       res.status(401).send("invalid signature")

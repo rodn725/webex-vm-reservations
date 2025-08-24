@@ -16,11 +16,16 @@ export const init = async () => {
 
 export const getBotId = () => botId
 
-export const verifySignature = (raw, signature = "") => {
-  if (!webhookSecret || !raw || !signature) return false
-  const hmac = crypto.createHmac("sha1", webhookSecret)
+export const verifySignature = (raw, signature = "") => {  
+  if (!webhookSecret || !raw || !signature) {
+    console.warn("Missing required verification data")
+    return false
+  }
+
+  const hmac = crypto.createHmac("sha1", webhookSecret.trim())
   hmac.update(raw)
   const digest = hmac.digest("hex")
+  
   return digest === signature
 }
 
