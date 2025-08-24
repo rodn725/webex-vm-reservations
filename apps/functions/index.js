@@ -10,7 +10,9 @@ import { listVms, claimVm, releaseVm, vms } from "./firestore.js"
 import { rosterCard } from "./cards.js"
 
 const postRoster = async (roomId) => {
+  console.log("posting roster for room", roomId)
   const vms = await listVms()
+  console.log("roster has", vms.length, "vms")
   const card = rosterCard(vms)
   await webexPost("/messages", {
     roomId,
@@ -22,18 +24,23 @@ const postRoster = async (roomId) => {
       },
     ],
   })
+  console.log("roster posted")
 }
 
 const handleCommand = async (roomId, text, personId) => {
+  console.log("handleCommand received", { roomId, text, personId })
   const cmd = parseCommand(text)
+  console.log("parsed command", cmd)
   if (!cmd) return
 
   if (cmd.action === "list") {
+    console.log("executing list command")
     await postRoster(roomId)
     return
   }
 
   if (cmd.action === "claim" && personId) {
+    console.log("executing claim command for", cmd.name)
     const person = await webexGet(`/people/${personId}`)
     await claimVm(cmd.name, person.displayName, cmd.minutes)
     await postRoster(roomId)
@@ -41,6 +48,7 @@ const handleCommand = async (roomId, text, personId) => {
   }
 
   if (cmd.action === "release") {
+    console.log("executing release command for", cmd.name)
     await releaseVm(cmd.name)
     await postRoster(roomId)
   }
@@ -48,22 +56,30 @@ const handleCommand = async (roomId, text, personId) => {
 
 export const webexHooks = async (req, res) => {
   try {
+    console.log("webexHooks invoked")
     await init()
+    console.log("webex init complete")
     const signature = req.get("x-spark-signature") || ""
     const raw = req.rawBody
+    console.log("received signature", signature)
 
     if (!verifySignature(raw, signature)) {
       console.warn("invalid signature")
       res.status(401).send("invalid signature")
       return
     }
+    console.log("signature verified")
 
     const { resource, event, data } = req.body
+    console.log("webhook payload", resource, event, data)
 
     if (resource === "messages" && event === "created") {
       try {
+        console.log("processing message event", data.id)
         const msg = await webexGet(`/messages/${data.id}`)
+        console.log("fetched message", msg)
         if (msg.personId === getBotId()) {
+          console.log("ignoring bot message")
           res.status(200).send("ok")
           return
         }
@@ -75,7 +91,9 @@ export const webexHooks = async (req, res) => {
 
     if (resource === "attachmentActions" && event === "created") {
       try {
+        console.log("processing attachment action", data.id)
         const action = await webexGet(`/attachment/actions/${data.id}`)
+        console.log("fetched action", action)
         await handleCommand(
           action.roomId,
           action.inputs?.command || "",
@@ -95,6 +113,7 @@ export const webexHooks = async (req, res) => {
 
 export const cleanup = async (req, res) => {
   try {
+    console.log("cleanup invoked")
     const collection = vms()
     const now = new Date()
     const snapshot = await collection
@@ -109,6 +128,8 @@ export const cleanup = async (req, res) => {
       })
       await batch.commit()
       console.log("released", snapshot.size, "vms")
+    } else {
+      console.log("no expired vms found")
     }
 
     res.status(200).send("ok")
