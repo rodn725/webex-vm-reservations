@@ -5,6 +5,8 @@ const toDate = v => {
   return new Date(v)
 }
 
+const TZ = 'America/Chicago'
+
 export const rosterCard = vms => ({
   type: 'AdaptiveCard',
   $schema: 'https://adaptivecards.io/schemas/adaptive-card.json',
@@ -14,7 +16,7 @@ export const rosterCard = vms => ({
     const inUse = vm.assignedTo && endAt && endAt > new Date()
 
     const status = inUse
-      ? `In use by ${vm.assignedTo} until ${endAt.toLocaleTimeString('en-US')}`
+      ? `In use by ${vm.assignedTo} until ${endAt.toLocaleTimeString('en-US', { timeZone: TZ, hour: 'numeric', minute: '2-digit', hour12: true })}`
       : 'Available'
 
     const actions = inUse
@@ -22,31 +24,35 @@ export const rosterCard = vms => ({
           {
             type: 'Action.Submit',
             title: 'Release',
-            data: {command: `/vm release ${vm.id}`}
+            data: {command: `/vm release ${vm.id}`},
+            style: 'destructive'
           }
         ]
       : [
           {
             type: 'Action.Submit',
             title: 'Claim 4h',
-            data: {command: `/vm claim ${vm.id} --for 4h`}
+            data: {command: `/vm claim ${vm.id} --for 4h`},
+            style: 'positive'
           },
           {
             type: 'Action.Submit',
             title: 'Claim 8h',
-            data: {command: `/vm claim ${vm.id} --for 8h`}
+            data: {command: `/vm claim ${vm.id} --for 8h`},
+            style: 'positive'
           }
         ]
 
     return [
       {
         type: 'Container',
+        separator: true,
         items: [
-          {type: 'TextBlock', text: `**${vm.id}** ${vm.name}`, weight: 'bolder'},
-          {type: 'TextBlock', text: status}
+          {type: 'TextBlock', text: `**${vm.id}**: ${vm.name}`, size: 'Medium'},
+          {type: 'TextBlock', text: status, size: 'Small'},
+          {type: 'ActionSet', actions}
         ]
       },
-      {type: 'ActionSet', actions}
     ]
   })
 })
