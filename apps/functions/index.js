@@ -14,6 +14,8 @@ const postRoster = async (roomId) => {
   const vms = await listVms()
   console.log("roster has", vms.length, "vms")
   const card = rosterCard(vms)
+  console.log("roster card created")
+  console.log(JSON.stringify(card, null, 2))
   await webexPost("/messages", {
     roomId,
     markdown: "VM roster",

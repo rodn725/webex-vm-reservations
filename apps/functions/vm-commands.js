@@ -1,11 +1,15 @@
 export const parseCommand = text => {
   const t = (text || '').trim()
-  if (!t.startsWith('/vm')) return null
+  // Find "/vm ..."
+  // Require it to be at start or preceded by whitespace to avoid false hits
+  const m = t.match(/(?:^|\s)(\/vm\b.*)$/i)
+  if (!m) return null
 
-  const parts = t.slice(3).trim().split(/\s+/)
+  const cmdLine = m[1].trim()          // "/vm list" or "/vm claim vm-01 --for 2h"
+  const parts = cmdLine.slice(3).trim().split(/\s+/)
   const action = parts.shift()?.toLowerCase()
 
-  if (action === 'list') return {action: 'list'}
+  if (action === 'list') return { action: 'list' }
 
   if (action === 'claim') {
     const name = parts.shift()
@@ -19,14 +23,13 @@ export const parseCommand = text => {
         minutes = match[2].toLowerCase() === 'h' ? value * 60 : value
       }
     }
-
-    return {action: 'claim', name, minutes}
+    return { action: 'claim', name, minutes }
   }
 
   if (action === 'release') {
     const name = parts.shift()
     if (!name) return null
-    return {action: 'release', name}
+    return { action: 'release', name }
   }
 
   return null

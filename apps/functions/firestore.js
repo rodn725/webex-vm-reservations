@@ -6,7 +6,7 @@ export const vms = (database = db) => database.collection("vms")
 
 export const listVms = async (database = db) => {
   console.log("listing vms")
-  const snapshot = await vms(database).orderBy("name").get()
+  const snapshot = await vms(database).orderBy("id").get()
   const results = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
   console.log("found", results.length, "vms")
   return results

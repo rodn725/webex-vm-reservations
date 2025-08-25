@@ -56,7 +56,7 @@ export const webexPost = async (path, body) => {
     body: JSON.stringify(body),
   })
   console.log("webex POST status", res.status)
-  if (!res.ok) throw new Error(`POST ${path} ${res.status}`)
+  if (!res.ok) throw new Error(`POST ${path} ${res.status} ${await res.text()}`)
   return res.json()
 }
 

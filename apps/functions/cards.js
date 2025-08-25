@@ -7,14 +7,14 @@ const toDate = v => {
 
 export const rosterCard = vms => ({
   type: 'AdaptiveCard',
-  $schema: 'http://adaptivecards.io/schemas/adaptive-card.json',
-  version: '1.4',
+  $schema: 'https://adaptivecards.io/schemas/adaptive-card.json',
+  version: '1.3',
   body: vms.flatMap(vm => {
     const endAt = toDate(vm.endAt)
     const inUse = vm.assignedTo && endAt && endAt > new Date()
 
     const status = inUse
-      ? `In use by ${vm.assignedTo} until ${endAt.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}`
+      ? `In use by ${vm.assignedTo} until ${endAt.toLocaleTimeString('en-US')}`
       : 'Available'
 
     const actions = inUse
@@ -28,13 +28,13 @@ export const rosterCard = vms => ({
       : [
           {
             type: 'Action.Submit',
-            title: 'Claim 1h',
-            data: {command: `/vm claim ${vm.id} --for 1h`}
+            title: 'Claim 4h',
+            data: {command: `/vm claim ${vm.id} --for 4h`}
           },
           {
             type: 'Action.Submit',
-            title: 'Claim 2h',
-            data: {command: `/vm claim ${vm.id} --for 2h`}
+            title: 'Claim 8h',
+            data: {command: `/vm claim ${vm.id} --for 8h`}
           }
         ]
 
@@ -42,7 +42,7 @@ export const rosterCard = vms => ({
       {
         type: 'Container',
         items: [
-          {type: 'TextBlock', text: vm.id, weight: 'bolder'},
+          {type: 'TextBlock', text: `**${vm.id}** ${vm.name}`, weight: 'bolder'},
           {type: 'TextBlock', text: status}
         ]
       },
