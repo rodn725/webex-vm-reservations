@@ -7,10 +7,11 @@ const toDate = v => {
 
 const TZ = 'America/Chicago'
 
-export const rosterCard = vms => {
-  const rows = []
-
-  const vmColumn = vm => {
+export const rosterCard = vms => ({
+  type: 'AdaptiveCard',
+  $schema: 'https://adaptivecards.io/schemas/adaptive-card.json',
+  version: '1.3',
+  body: vms.flatMap(vm => {
     const endAt = toDate(vm.endAt)
     const inUse = vm.assignedTo && endAt && endAt > new Date()
 
@@ -42,37 +43,16 @@ export const rosterCard = vms => {
           }
         ]
 
-    return {
-      type: 'Column',
-      width: 'stretch',
-      items: [
-        {type: 'TextBlock', text: `**${vm.id}**: ${vm.name}`, size: 'Medium'},
-        {type: 'TextBlock', text: status, size: 'Small'},
-        {type: 'ActionSet', actions}
-      ]
-    }
-  }
-
-  for (let i = 0; i < vms.length; i += 2) {
-    const pair = vms.slice(i, i + 2)
-    rows.push({
-      type: 'ColumnSet',
-      separator: i > 0,
-      columns: pair.map(vmColumn)
-    })
-  }
-
-  return {
-    type: 'AdaptiveCard',
-    $schema: 'https://adaptivecards.io/schemas/adaptive-card.json',
-    version: '1.3',
-    body: rows,
-    actions: [
+    return [
       {
-        type: 'Action.Submit',
-        title: 'Refresh',
-        data: {command: '/vm list'}
-      }
+        type: 'Container',
+        separator: true,
+        items: [
+          {type: 'TextBlock', text: `**${vm.id}**: ${vm.name}`, size: 'Medium'},
+          {type: 'TextBlock', text: status, size: 'Small'},
+          {type: 'ActionSet', actions}
+        ]
+      },
     ]
-  }
-}
+  })
+})
